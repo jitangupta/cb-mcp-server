@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc",
-    "start": "node dist/cb-mcp-server/src/index.js"
+    "start": "node dist/index.js"
   },
   "keywords": [],
   "license": "PRIVATE",

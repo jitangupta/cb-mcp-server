@@ -1,100 +1,13 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { db } from "../firebase.js";
-import type {
-  ContentItem,
-  ContentPhase,
-  ContentStatus,
-  ContentTimestamps,
-  ContentType,
-} from "../../../content-board/src/types/content.js";
-
-// ---------------------------------------------------------------------------
-// Firestore DocumentData → ContentItem normalizer (Admin SDK variant)
-// ---------------------------------------------------------------------------
-
-function convertTimestamp(v: unknown): string | null {
-  if (v && typeof v === "object" && "toDate" in v) {
-    return (v as { toDate: () => Date }).toDate().toISOString();
-  }
-  if (typeof v === "string") return v;
-  return null;
-}
-
-function normalizeContentItem(
-  id: string,
-  data: FirebaseFirestore.DocumentData,
-): ContentItem {
-  const asString = (v: unknown): string | null =>
-    typeof v === "string" ? v : null;
-
-  const ts = (data.timestamps ?? {}) as Record<string, unknown>;
-
-  return {
-    id,
-    title: data.title ?? "",
-    description: data.description ?? "",
-    tags: Array.isArray(data.tags) ? data.tags : [],
-    status: data.status ?? "draft",
-    phase: data.phase ?? "pre-production",
-    order: data.order ?? 0,
-    contentType: data.contentType ?? "video",
-    parentVideoId: asString(data.parentVideoId),
-    script: asString(data.script),
-    platformVersions: Array.isArray(data.platformVersions)
-      ? data.platformVersions
-      : [],
-    youtubeUrl: asString(data.youtubeUrl),
-    demoItems: Array.isArray(data.demoItems) ? data.demoItems : [],
-    talkingPoints: Array.isArray(data.talkingPoints)
-      ? data.talkingPoints
-      : [],
-    shootingScript: asString(data.shootingScript),
-    thumbnailIdeas: asString(data.thumbnailIdeas),
-    linkedContent: Array.isArray(data.linkedContent)
-      ? data.linkedContent
-      : [],
-    notes: asString(data.notes),
-    learnings: Array.isArray(data.learnings) ? data.learnings : [],
-    feedback: Array.isArray(data.feedback) ? data.feedback : [],
-    timestamps: {
-      created: convertTimestamp(ts.created) ?? new Date().toISOString(),
-      technicallyReady: convertTimestamp(ts.technicallyReady),
-      shootingScriptReady: convertTimestamp(ts.shootingScriptReady),
-      readyToRecord: convertTimestamp(ts.readyToRecord),
-      recorded: convertTimestamp(ts.recorded),
-      edited: convertTimestamp(ts.edited),
-      published: convertTimestamp(ts.published),
-      shortsExtracted: convertTimestamp(ts.shortsExtracted),
-      lifetimeValueEnds: convertTimestamp(ts.lifetimeValueEnds),
-      updated: convertTimestamp(ts.updated) ?? new Date().toISOString(),
-    },
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Tool registration
-// ---------------------------------------------------------------------------
-
-const CONTENT_STATUSES = [
-  "draft",
-  "technically-ready",
-  "shooting-script-ready",
-  "ready-to-record",
-  "recorded",
-  "edited",
-  "published",
-  "extracted-shorts",
-  "lifetime-value-ends",
-] as const;
-
-const CONTENT_PHASES = [
-  "pre-production",
-  "production",
-  "post-production",
-] as const;
-
-const CONTENT_TYPES = ["video", "short"] as const;
+import type { ContentItem } from "../types.js";
+import {
+  CONTENT_PHASES,
+  CONTENT_STATUSES,
+  CONTENT_TYPES,
+  normalizeContentItem,
+} from "../normalize.js";
 
 export function registerListContents(server: McpServer): void {
   server.tool(
